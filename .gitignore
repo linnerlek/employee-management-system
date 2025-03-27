@@ -1,0 +1,9 @@
+# personal working folder
+linn/ 
+
+# database login info file
+dbconfig.properties
+
+*.class
+out/
+
