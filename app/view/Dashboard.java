@@ -2,12 +2,17 @@ package app.view;
 
 import app.model.User;
 import app.model.Employee;
+import app.model.PayStatement;
 import app.dao.EmployeeDAO;
 import app.dao.PayrollDAO;
 import app.dao.ReportDAO;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.List;
 
 public class Dashboard {
     public static void display(User user) {
@@ -94,6 +99,71 @@ public class Dashboard {
         dashboardPanel.add(grid, BorderLayout.CENTER);
         contentPanel.add(dashboardPanel, "dashboard");
 
+        JPanel payHistoryPanel = new JPanel(new BorderLayout());
+        JLabel historyTitle = new JLabel("Pay History", SwingConstants.CENTER);
+        historyTitle.setFont(new Font("Arial", Font.BOLD, 20));
+        payHistoryPanel.add(historyTitle, BorderLayout.NORTH);
+
+        String[] columns = user.isAdmin()
+            ? new String[]{"EmpID", "Pay Date", "Earnings", "Deductions", "Net Pay"}
+            : new String[]{"Pay Date", "Earnings", "Deductions", "Net Pay"};
+
+        List<PayStatement> statements = user.isAdmin()
+            ? PayrollDAO.getAllPayStatements()
+            : PayrollDAO.getPayStatements(user.getEmpid());
+        
+        if (statements.isEmpty()) {
+            JLabel msg = new JLabel("No pay statements available.", SwingConstants.CENTER);
+            msg.setFont(new Font("Arial", Font.PLAIN, 16));
+            payHistoryPanel.add(msg, BorderLayout.CENTER);
+            contentPanel.add(payHistoryPanel, "payHistory");
+            return;
+        }
+        
+        DefaultTableModel tableModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        for (PayStatement ps : statements) {
+            double deductions = ps.getTotalDeductions();
+            double earnings = ps.getEarnings();
+            double netPay = earnings - deductions;
+
+            if (user.isAdmin()) {
+                tableModel.addRow(new Object[]{
+                    ps.getEmpid(), ps.getPayDate(), earnings,
+                    String.format("%.2f", deductions), String.format("%.2f", netPay)
+                });
+            } else {
+                tableModel.addRow(new Object[]{
+                    ps.getPayDate(), earnings,
+                    String.format("%.2f", deductions), String.format("%.2f", netPay)
+                });
+            }
+        }
+
+        JTable table = new JTable(tableModel);
+        table.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int row = table.getSelectedRow();
+                    if (row != -1) {
+                        PayStatement ps = statements.get(row);
+                        JPanel reportPanel = PayReportPanel.create(ps, () -> switchPanel(contentPanel, "payHistory"));
+                        contentPanel.add(reportPanel, "payReport");
+                        switchPanel(contentPanel, "payReport");
+                    }
+                }
+            }
+        });
+
+        JScrollPane scrollPane = new JScrollPane(table);
+        payHistoryPanel.add(scrollPane, BorderLayout.CENTER);
+        contentPanel.add(payHistoryPanel, "payHistory");
+
         JPanel container = new JPanel(new BorderLayout());
         container.add(sidebar, BorderLayout.WEST);
         container.add(contentPanel, BorderLayout.CENTER);
@@ -101,14 +171,11 @@ public class Dashboard {
         frame.setContentPane(container);
         frame.setVisible(true);
 
-        // Navigation
         btnDashboard.addActionListener(e -> switchPanel(contentPanel, "dashboard"));
+        btnPayHistory.addActionListener(e -> switchPanel(contentPanel, "payHistory"));
         btnLogout.addActionListener(e -> {
             frame.dispose();
             LoginView.display();
-        });
-        btnPayHistory.addActionListener(e -> {
-            JOptionPane.showMessageDialog(frame, "Pay report view coming soon!", "Pay History", JOptionPane.INFORMATION_MESSAGE);
         });
     }
 
