@@ -6,4 +6,4 @@ dbconfig.properties
 
 *.class
 out/
-
+lib/*.jar
