@@ -49,17 +49,12 @@ public class LoginView {
             String email = emailText.getText();
             String password = new String(passwordText.getPassword());
 
-            User user = AuthDAO.login(email, password);
+            User user = AuthDAO.login(email);
 
             if (user != null) {
-                JOptionPane.showMessageDialog(frame, "Welcome, " + user.getRole() + "!");
+                JOptionPane.showMessageDialog(frame, "Welcome, " + user.getFname() + "!");
                 frame.dispose();  // Close login window
-
-                if (user.isAdmin()) {
-                    AdminController.adminMenu();
-                } else {
-                    EmployeeController.employeeMenu(user);
-                }
+                app.view.Dashboard.display(user);
             } else {
                 JOptionPane.showMessageDialog(frame, "Invalid credentials", "Login Failed", JOptionPane.ERROR_MESSAGE);
             }

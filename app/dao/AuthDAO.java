@@ -1,17 +1,36 @@
 package app.dao;
 
-import java.sql.*;
 import app.model.User;
 import app.db.DBConnection;
 
-public class AuthDAO {
-    public static User login(String email, String password) {
-        // TODO: Implement DB logic
-        // JOIN employees + employee_job_titles to get job_title_id
-        // Return new User(email, password, jobTitleId)
+import java.sql.*;
 
-        // TEMP for testing:
-        String mockJobTitleId = "901";
-        return new User(email, password, mockJobTitleId);
+public class AuthDAO {
+    public static User login(String email) {
+        String query = "SELECT e.empid, e.email, e.fname, ej.job_title_id " +
+               "FROM employees e " +
+               "JOIN employee_job_titles ej ON e.empid = ej.empid " +
+               "WHERE e.email = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, email);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                int empid = rs.getInt("empid");
+                String jobTitleId = rs.getString("job_title_id");
+                String fname = rs.getString("fname");
+                return new User(empid, email, "mockPassword", fname, jobTitleId);
+            }
+             else {
+                return null;  // Email not found
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

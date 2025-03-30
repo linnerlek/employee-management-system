@@ -6,7 +6,7 @@ public class EmployeeController {
 
     public static void employeeMenu(User user) {
         // Launch the Employee dashboard GUI
-        app.view.EmployeeDashboard.display(user);
+        app.view.Dashboard.display(user);
     }
 
     public static void viewOwnData() {

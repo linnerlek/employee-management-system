@@ -26,6 +26,8 @@ This project is a Java + MySQL desktop app with a GUI and secure login.
 
 3. Compile and run:
    ```bash
-   javac -d out Main.java $(find app -name "*.java")
-   java -cp out Main
+   javac -cp .:lib/mysql-connector-j-9.2.0.jar -d out Main.java $(find app -name "*.java")
+   java -cp out:lib/mysql-connector-j-9.2.0.jar Main
    ```
+
+   - **Replace the mysql-connector with your version.**
