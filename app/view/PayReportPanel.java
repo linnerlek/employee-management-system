@@ -22,7 +22,8 @@ public class PayReportPanel {
         JPanel empInfo = new JPanel(new GridLayout(0, 2, 10, 10));
         empInfo.setBorder(BorderFactory.createTitledBorder("Employee Info"));
 
-        Employee emp = user.getEmployee();
+        Employee emp = EmployeeDAO.getEmployeeById(ps.getEmpid());
+
 
         if (emp != null) {
             addRow(empInfo, "Name:", emp.getFname() + " " + emp.getLname());
