@@ -4,7 +4,7 @@ public class AdminController {
 
     public static void adminMenu() {
         // Launch the Admin dashboard GUI
-        app.view.AdminDashboard.display();
+        app.view.Dashboard.display();
     }
 
     public static void searchEmployee() {
