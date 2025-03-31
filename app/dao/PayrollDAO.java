@@ -9,6 +9,7 @@ import java.util.List;
 
 public class PayrollDAO {
 
+    // gets most recent pay date for specific employee
     public static String getLastPayDate(int empid) {
         String query = "SELECT pay_date FROM payroll WHERE empid = ? ORDER BY pay_date DESC LIMIT 1";
         try (Connection conn = DBConnection.getConnection();
@@ -28,6 +29,7 @@ public class PayrollDAO {
         }
     }
 
+    // gets latest payroll date across all employees
     public static String getMostRecentPayrollDate() {
         String query = "SELECT MAX(pay_date) AS most_recent FROM payroll";
         try (Connection conn = DBConnection.getConnection();
@@ -46,7 +48,7 @@ public class PayrollDAO {
         }
     }
     
-
+    // fetches pay history for single employee
     public static List<PayStatement> getPayStatements(int empid) {
         List<PayStatement> statements = new ArrayList<>();
     
@@ -60,7 +62,6 @@ public class PayrollDAO {
             ORDER BY p.pay_date DESC
         """;
 
-    
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
     
@@ -88,7 +89,7 @@ public class PayrollDAO {
         return statements;
     }
     
-
+    // gets pay history for all employees (admin view)
     public static List<PayStatement> getAllPayStatements() {
         List<PayStatement> list = new ArrayList<>();
     
@@ -129,8 +130,6 @@ public class PayrollDAO {
         return list;
     }
     
-
-
     public static void updateSalaries(double min, double max, double percent) {
         // Task 6: Update salary range
     }

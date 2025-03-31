@@ -10,7 +10,7 @@ public class Employee {
     private String salary;
     private String jobTitle;
 
-    // Address
+    // address fields
     private String street;
     private String zip;
     private String gender;
@@ -20,10 +20,10 @@ public class Employee {
     private String cityName;
     private String stateName;
 
-    // Division
+    // division info
     private String divisionName;
 
-    // Payroll
+    // payroll tracking
     private String lastPaidDate;
 
     public Employee(int empid, String fname, String lname, String email, String ssn, String hireDate, String salary, String jobTitle,
@@ -49,6 +49,7 @@ public class Employee {
         this.lastPaidDate = defaultIfNull(lastPaidDate);
     }
 
+    // prevents null display values
     private String defaultIfNull(String val) {
         return (val == null || val.isEmpty()) ? "Missing" : val;
     }

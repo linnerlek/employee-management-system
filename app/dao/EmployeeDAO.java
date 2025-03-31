@@ -6,6 +6,7 @@ import app.db.DBConnection;
 import java.sql.*;
 
 public class EmployeeDAO {
+    // loads full employee data with joined tables
     public static Employee getEmployeeById(int empid) {
         String query = """
             SELECT 

@@ -1,6 +1,7 @@
 package app.view;
 
 import app.model.PayStatement;
+import app.model.User;
 import app.model.Employee;
 import app.dao.EmployeeDAO;
 
@@ -9,7 +10,7 @@ import java.awt.*;
 
 public class PayReportPanel {
 
-    public static JPanel create(PayStatement ps, Runnable onBack) {
+    public static JPanel create(User user, PayStatement ps, Runnable onBack) {
         JPanel panel = new JPanel(new BorderLayout(20, 20));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
 
@@ -17,11 +18,12 @@ public class PayReportPanel {
         title.setFont(new Font("Arial", Font.BOLD, 24));
         panel.add(title, BorderLayout.NORTH);
 
-        // Employee Info
+        // employee info section
         JPanel empInfo = new JPanel(new GridLayout(0, 2, 10, 10));
         empInfo.setBorder(BorderFactory.createTitledBorder("Employee Info"));
 
-        Employee emp = EmployeeDAO.getEmployeeById(ps.getEmpid());
+        Employee emp = user.getEmployee();
+
         if (emp != null) {
             addRow(empInfo, "Name:", emp.getFname() + " " + emp.getLname());
             addRow(empInfo, "Email:", emp.getEmail());
@@ -31,16 +33,16 @@ public class PayReportPanel {
         addRow(empInfo, "Pay Date:", ps.getPayDate());
         panel.add(empInfo, BorderLayout.NORTH);
 
-        // Earnings and Deductions
+        // earnings and deductions
         JPanel breakdown = new JPanel(new GridLayout(1, 2, 40, 10));
 
-        // Earnings
+        // earnings panel
         JPanel earningsPanel = new JPanel(new GridLayout(0, 1, 5, 5));
         earningsPanel.setBorder(BorderFactory.createTitledBorder("Earnings"));
         earningsPanel.add(new JLabel("Earnings: " + format(ps.getEarnings())));
         breakdown.add(earningsPanel);
 
-        // Deductions
+        // deductions panel
         JPanel deductionsPanel = new JPanel(new GridLayout(0, 1, 5, 5));
         deductionsPanel.setBorder(BorderFactory.createTitledBorder("Deductions"));
         deductionsPanel.add(new JLabel("Federal Tax: " + format(ps.getFedTax())));
@@ -56,7 +58,7 @@ public class PayReportPanel {
         breakdown.add(deductionsPanel);
         panel.add(breakdown, BorderLayout.CENTER);
 
-        // Net Pay
+        // net pay display
         JPanel netPayPanel = new JPanel(new BorderLayout());
         JLabel netPayLabel = new JLabel("Net Pay: " + format(ps.getNetPay()), SwingConstants.RIGHT);
         netPayLabel.setFont(new Font("Arial", Font.BOLD, 22));
@@ -64,7 +66,7 @@ public class PayReportPanel {
         netPayPanel.add(netPayLabel, BorderLayout.EAST);
         panel.add(netPayPanel, BorderLayout.SOUTH);
 
-        // Back Button
+        // back button
         JButton backButton = new JButton("Back");
         backButton.addActionListener(e -> onBack.run());
         netPayPanel.add(backButton, BorderLayout.WEST);
@@ -72,11 +74,13 @@ public class PayReportPanel {
         return panel;
     }
 
+    // adds label-value pair to panel
     private static void addRow(JPanel panel, String label, String value) {
         panel.add(new JLabel(label));
         panel.add(new JLabel(value));
     }
 
+    // formats money values
     private static String format(double val) {
         return String.format("$%.2f", val);
     }

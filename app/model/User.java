@@ -7,6 +7,8 @@ public class User {
     private String role;
     private String fname;
 
+    private Employee employee; // cached after login
+
     public User(int empid, String email, String password, String fname, String jobTitleId) {
         this.empid = empid;
         this.email = email;
@@ -15,6 +17,7 @@ public class User {
         this.role = jobTitleId.startsWith("9") ? "Admin" : "Employee";
     }
 
+    // check if user has admin access
     public boolean isAdmin() {
         return "Admin".equalsIgnoreCase(role);
     }
@@ -41,5 +44,13 @@ public class User {
 
     public void setRole(String jobTitleId) {
         this.role = jobTitleId.startsWith("9") ? "Admin" : "Employee";
+    }
+
+    public Employee getEmployee() {
+        return employee;
+    }
+
+    public void setEmployee(Employee employee) {
+        this.employee = employee;
     }
 }

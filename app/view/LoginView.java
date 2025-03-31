@@ -1,8 +1,7 @@
 package app.view;
 
 import app.model.User;
-import app.controller.AdminController;
-import app.controller.EmployeeController;
+import app.controller.LoginController;
 import app.dao.AuthDAO;
 
 import javax.swing.*;
@@ -22,6 +21,7 @@ public class LoginView {
         frame.setVisible(true);
     }
 
+    // builds login form
     private static void placeComponents(JPanel panel, JFrame frame) {
         panel.setLayout(null);
 
@@ -46,18 +46,8 @@ public class LoginView {
         panel.add(loginButton);
 
         loginButton.addActionListener(e -> {
-            String email = emailText.getText();
-            String password = new String(passwordText.getPassword());
-
-            User user = AuthDAO.login(email);
-
-            if (user != null) {
-                JOptionPane.showMessageDialog(frame, "Welcome, " + user.getFname() + "!");
-                frame.dispose();  // Close login window
-                app.view.Dashboard.display(user);
-            } else {
-                JOptionPane.showMessageDialog(frame, "Invalid credentials", "Login Failed", JOptionPane.ERROR_MESSAGE);
-            }
+            LoginController.handleLogin(emailText.getText(), passwordText.getPassword(), frame);
         });
+
     }
 }

@@ -6,6 +6,7 @@ import app.db.DBConnection;
 import java.sql.*;
 
 public class AuthDAO {
+    // authenticates user by email, returns user obj if found
     public static User login(String email) {
         String query = "SELECT e.empid, e.email, e.fname, ej.job_title_id " +
                "FROM employees e " +
@@ -24,8 +25,8 @@ public class AuthDAO {
                 String fname = rs.getString("fname");
                 return new User(empid, email, "mockPassword", fname, jobTitleId);
             }
-             else {
-                return null;  // Email not found
+            else {
+                return null;  // email not found
             }
 
         } catch (SQLException e) {

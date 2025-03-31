@@ -4,6 +4,8 @@ public class PayStatement {
     private int empid;
     private String name;
     private String payDate;
+    
+    // pay components
     private double earnings, fedTax, fedMed, fedSS, stateTax, retire401k, healthCare;
 
     public PayStatement(int empid, String name, String payDate,
@@ -32,13 +34,13 @@ public class PayStatement {
     public double getRetire401k() { return retire401k; }
     public double getHealthCare() { return healthCare; }
 
+    // sum of all deductions
     public double getTotalDeductions() {
         return fedTax + fedMed + fedSS + stateTax + retire401k + healthCare;
     }
 
+    // earnings minus deductions
     public double getNetPay() {
         return earnings - getTotalDeductions();
     }
-
-    
 }

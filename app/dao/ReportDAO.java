@@ -4,7 +4,6 @@ import app.db.DBConnection;
 import java.sql.*;
 
 public class ReportDAO {
-    // ReportDAO.java
     public static int getTotalEmployees() {
         String sql = "SELECT COUNT(*) FROM employees";
         try (Connection conn = DBConnection.getConnection();
