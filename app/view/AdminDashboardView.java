@@ -25,7 +25,7 @@ public class AdminDashboardView {
     }
 
     // builds the admin dashboard with org stats
-    public static JPanel createAdminCards(JPanel contentPanel) {
+    public static JPanel createAdminCards(JPanel contentPanel, Runnable onViewReports) {
         JPanel orgStats = new JPanel(new GridLayout(1, 4, 10, 10));
 
         int totalEmployees = ReportDAO.getTotalEmployees();
@@ -43,9 +43,9 @@ public class AdminDashboardView {
         reportsCard.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                DashboardView.switchPanel(contentPanel, "reports");
+                onViewReports.run();
             }
-        });
+        });        
         orgStats.add(reportsCard);
 
         return orgStats;
