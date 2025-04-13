@@ -2,7 +2,6 @@ package app.dao;
 
 import app.db.DBConnection;
 import app.model.PayStatement;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -130,7 +129,24 @@ public class PayrollDAO {
         return list;
     }
     
-    public static void updateSalaries(double min, double max, double percent) {
-        // Task 6: Update salary range
+    public static int updateSalaries(double min, double max, double percent) {
+        // The SQL command to be used in the database
+        // The UPDATE employees selects the employee table to update 
+        // SET salary specifies that its the salary column which is updated by a value by multiplying the salary by it's percentage
+        // The WHERE salary BETWEEN ? AND ?, the WHERE restricts it to only the salary is affected for employees between 2 values
+        String query = "UPDATE employees SET salary = salary * (1 + ? / 100) WHERE salary BETWEEN ? AND ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+    
+            stmt.setDouble(1, percent);
+            stmt.setDouble(2, min);
+            stmt.setDouble(3, max);
+            return stmt.executeUpdate(); // returns # of rows affected
+    
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return 0;
+        }
     }
+    
 }
