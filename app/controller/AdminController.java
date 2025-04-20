@@ -1,12 +1,16 @@
 package app.controller;
 
 import app.view.SearchEmployeeView;
+import app.model.MonthlyPayRecord;
 
 import javax.swing.*;
+import java.sql.*;
 import app.dao.EmployeeDAO;
+import app.dao.ReportDAO;
 import app.model.Employee;
+import app.model.MonthlyPayDTO;
 
-import java.util.List;
+import java.util.*;
 
 public class AdminController {
 
@@ -154,8 +158,56 @@ public class AdminController {
         // Task 8: Monthly pay by division report
     }
 
-    public static void generatePayByJobTitle() {
+    public static Map<String, Map<String, List<MonthlyPayRecord>>> generatePayByJobTitle(List<MonthlyPayRecord> records) {
         // Task 9: Monthly pay by job title report
+        Map<String, Map<String, List<MonthlyPayRecord>>> dateRecord = new HashMap<>();
+        for(MonthlyPayRecord rec : records) {
+            String year = rec.getYear();
+            String month = rec.getMonth();
+
+            if(!dateRecord.containsKey(year)) {
+                dateRecord.put(year, new HashMap<>());
+            }
+            if(!dateRecord.get(year).containsKey(month)) {
+                dateRecord.get(year).put(month, new ArrayList<>());
+            }
+
+            dateRecord.get(year).get(month).add(rec);
+        }
+
+        return dateRecord;
+    }
+
+    // Generate a list of years
+    public static List<String> getYearList(Map<String, Map<String, List<MonthlyPayRecord>>> records) {
+        List<String> yearList = new ArrayList<>();
+        
+        for(String key : records.keySet()) {
+            yearList.add(key);
+        }
+
+        return yearList;
+    }
+
+    // Method for output
+    public static void printPayByTitleRecord(Map<String, Map<String, List<MonthlyPayRecord>>> records, String year, String month) {
+        StringBuilder result = new StringBuilder();
+        result.append("Report for ").append(month).append("/").append(year).append("\n\n");
+
+        if(records.containsKey(year) && records.get(year).containsKey(month)) {
+            List<MonthlyPayRecord> resultList = records.get(year).get(month);
+
+            if(resultList.isEmpty()) {
+                result.append("Record not found.");
+            } else {
+                for(MonthlyPayRecord rec : resultList) {
+                    result.append(String.format("%s | %.2f\n", rec.getJobTitle(), rec.getEarnings()));
+                    result.append(String.format("----------------------------------------------\n\n"));
+                }
+            }
+        }
+        
+        JOptionPane.showMessageDialog(null, result.toString(), "Pay Report", JOptionPane.INFORMATION_MESSAGE);
     }
 
     public static void generateFullReport() {
