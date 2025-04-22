@@ -9,13 +9,19 @@ import java.util.*;
 import javax.swing.*;
 
 public class ReportsView {
-    private static Map<String, Map<String, java.util.List<MonthlyPayRecord>>> groupedData;
+    private static Map<String, Map<String, java.util.List<MonthlyPayRecord>>> groupedDataByJobTitle;
+    private static Map<String, Map<String, java.util.List<MonthlyPayRecord>>> groupedDataByDivision;
 
     public static JPanel create() {
         // Generate data for population
-        if(groupedData == null) {
-            java.util.List<MonthlyPayRecord> records = ReportDAO.getMonthlyPayByJobTitle();
-            groupedData = AdminController.generatePayByJobTitle(records);
+        if(groupedDataByJobTitle == null) {
+            java.util.List<MonthlyPayRecord> jobTitleRecords = ReportDAO.getMonthlyPayByJobTitle();
+            groupedDataByJobTitle = AdminController.generatePayByJobTitle(jobTitleRecords);
+        }
+
+        if (groupedDataByDivision == null) {
+            java.util.List<MonthlyPayRecord> divisionRecords = ReportDAO.getMonthlyPayByDivision();
+            groupedDataByDivision = AdminController.generatePayByDivision(divisionRecords); 
         }
 
         JPanel panel = new JPanel(new BorderLayout());
@@ -30,7 +36,7 @@ public class ReportsView {
         // Initialize panels
         JPanel buttonsPanel = createButtonPanel(cardPanel);
         buttonsPanel.setName("buttons");
-        JPanel yearPanel = createYearPanel(new ArrayList<>(), cardPanel); //Placeholder
+        JPanel yearPanel = createYearPanel(new ArrayList<>(), cardPanel, new HashMap<>()); //Placeholder
         yearPanel.setName("yearPanel");
         JPanel monthPanel = new JPanel(); //Placeholder
         monthPanel.setName("monthPanel");
@@ -61,7 +67,7 @@ public class ReportsView {
                 index = Arrays.asList(cardPanel.getComponents()).indexOf(yearPanel);
             }
 
-            JPanel newYearPanel = createYearPanel(AdminController.getYearList(groupedData), cardPanel);
+            JPanel newYearPanel = createYearPanel(AdminController.getYearList(groupedDataByJobTitle), cardPanel, groupedDataByJobTitle);
             newYearPanel.setName("yearPanel");
 
             // Replace placeholder
@@ -73,12 +79,34 @@ public class ReportsView {
             CardLayout cl = (CardLayout) cardPanel.getLayout();
             cl.show(cardPanel, "yearPanel");
         }));
+        buttonPanel.add(Box.createVerticalStrut(10));
+
+        buttonPanel.add(createViewButton("View Pay by Division", e -> {
+            JPanel yearPanel = (JPanel)findComponentByName(cardPanel, "yearPanel");
+
+            int index = -1;
+            if (yearPanel != null) {
+                index = Arrays.asList(cardPanel.getComponents()).indexOf(yearPanel);
+            }
+
+            JPanel newYearPanel = createYearPanel(AdminController.getYearList(groupedDataByDivision), cardPanel, groupedDataByDivision);
+            newYearPanel.setName("yearPanel");
+
+            if(index >= 0) {
+                cardPanel.remove(index);
+                cardPanel.add(newYearPanel, "yearPanel", index);
+            }
+
+            CardLayout cl = (CardLayout) cardPanel.getLayout();
+            cl.show(cardPanel, "yearPanel");
+            
+        }));
 
         return buttonPanel;
     }
 
     //Create panel for year drop down menu
-    private static JPanel createYearPanel(java.util.List<String> yearList, JPanel cardPanel) {
+    private static JPanel createYearPanel(java.util.List<String> yearList, JPanel cardPanel, Map<String, Map<String, java.util.List<MonthlyPayRecord>>> groupedData) {
         JPanel yearPanel = new JPanel();
         yearPanel.setLayout(new BoxLayout(yearPanel, BoxLayout.Y_AXIS));
         yearPanel.setBorder(BorderFactory.createEmptyBorder(20, 50, 20, 50));
@@ -99,11 +127,18 @@ public class ReportsView {
         yearPanel.add(yearSelectionPanel);
         yearPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        // Add button to move to the next panel
+        JPanel localButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        localButtonPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+
+        // Add buttons to move to the next panel and back
         JButton nextButton = new JButton("Next");
-        nextButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        nextButton.setMaximumSize(new Dimension(150, 30));
-        yearPanel.add(nextButton);
+        JButton backButton = new JButton("Back");
+
+        localButtonPanel.add(nextButton);
+        localButtonPanel.add(backButton);
+
+        yearPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        yearPanel.add(localButtonPanel);
 
         nextButton.addActionListener(e -> {
             String selectedYear = (String) yearBox.getSelectedItem();
@@ -112,22 +147,25 @@ public class ReportsView {
             }
 
             // Generate list of months for selected year
-            Map<String, java.util.List<MonthlyPayRecord>> yearData = groupedData.get(selectedYear);
-            java.util.List<String> monthList = new ArrayList<>(yearData.keySet());
-            Collections.sort(monthList);
+            java.util.List<String> monthList = AdminController.getMonthList(groupedData, selectedYear);
 
             cardPanel.remove(2);
-            cardPanel.add(createMonthPanel(monthList, selectedYear, cardPanel), "monthPanel");
+            cardPanel.add(createMonthPanel(monthList, selectedYear, cardPanel, groupedData), "monthPanel");
             
             CardLayout cl = (CardLayout) cardPanel.getLayout();
             cl.show(cardPanel, "monthPanel");
+        });
+
+        backButton.addActionListener(e -> {
+            CardLayout cl = (CardLayout) cardPanel.getLayout();
+            cl.show(cardPanel, "buttons");
         });
 
         return yearPanel;
     }
 
     // Create panel for month drop down menu
-    private static JPanel createMonthPanel(java.util.List<String> monthList, String selectedYear, JPanel cardPanel) {
+    private static JPanel createMonthPanel(java.util.List<String> monthList, String selectedYear, JPanel cardPanel, Map<String, Map<String, java.util.List<MonthlyPayRecord>>> groupedData) {
         JPanel monthPanel = new JPanel();
         monthPanel.setLayout(new BoxLayout(monthPanel, BoxLayout.Y_AXIS));
         monthPanel.setBorder(BorderFactory.createEmptyBorder(20, 50, 20, 50));
@@ -160,7 +198,7 @@ public class ReportsView {
         viewButton.addActionListener(e -> {
             String selectedMonth = (String) monthBox.getSelectedItem();
 
-            AdminController.printPayByTitleRecord(groupedData, selectedYear, selectedMonth);
+            AdminController.printPayRecord(groupedData, selectedYear, selectedMonth);
         });
 
         // Add button to move back to year panel

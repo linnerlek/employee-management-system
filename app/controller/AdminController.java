@@ -154,8 +154,23 @@ public class AdminController {
         // Task 7: Insert into multiple related tables (employees, address, etc.)
     }
 
-    public static void generatePayByDivision() {
-        // Task 8: Monthly pay by division report
+    public static Map<String, Map<String, List<MonthlyPayRecord>>> generatePayByDivision(List<MonthlyPayRecord> records) {
+        Map<String, Map<String, List<MonthlyPayRecord>>> dateRecord = new HashMap<>();
+        for (MonthlyPayRecord rec : records) {
+            String year = rec.getYear();
+            String month = rec.getMonth();
+
+            if(!dateRecord.containsKey(year)) {
+                dateRecord.put(year, new HashMap<>());
+            }
+            if(!dateRecord.get(year).containsKey(month)) {
+                dateRecord.get(year).put(month, new ArrayList<>());
+            }
+
+            dateRecord.get(year).get(month).add(rec);
+        }
+
+        return dateRecord;
     }
 
     public static Map<String, Map<String, List<MonthlyPayRecord>>> generatePayByJobTitle(List<MonthlyPayRecord> records) {
@@ -189,8 +204,15 @@ public class AdminController {
         return yearList;
     }
 
+    public static List<String> getMonthList(Map<String, Map<String, List<MonthlyPayRecord>>> records, String selectedYear) {
+        Map<String, List<MonthlyPayRecord>> yearData = records.get(selectedYear);
+        List<String> monthList = new ArrayList(yearData.keySet());
+        Collections.sort(monthList);
+        return monthList;
+    }
+
     // Method for output
-    public static void printPayByTitleRecord(Map<String, Map<String, List<MonthlyPayRecord>>> records, String year, String month) {
+    public static void printPayRecord(Map<String, Map<String, List<MonthlyPayRecord>>> records, String year, String month) {
         StringBuilder result = new StringBuilder();
         result.append("Report for ").append(month).append("/").append(year).append("\n\n");
 
@@ -201,7 +223,12 @@ public class AdminController {
                 result.append("Record not found.");
             } else {
                 for(MonthlyPayRecord rec : resultList) {
-                    result.append(String.format("%s | %.2f\n", rec.getJobTitle(), rec.getEarnings()));
+                    if(rec.getDivision() == null) {
+                        result.append(String.format("%s | %.2f\n", rec.getJobTitle(), rec.getEarnings()));
+                    }
+                    if (rec.getJobTitle() == null) {
+                        result.append(String.format("%s | %.2f\n", rec.getDivision(), rec.getEarnings()));
+                    }
                     result.append(String.format("----------------------------------------------\n\n"));
                 }
             }
