@@ -8,6 +8,18 @@ import app.view.SearchEmployeeView;
 import java.util.List;
 import javax.swing.*;
 
+import app.view.SearchEmployeeView;
+import app.model.MonthlyPayRecord;
+
+import javax.swing.*;
+import java.sql.*;
+import app.dao.EmployeeDAO;
+import app.dao.ReportDAO;
+import app.model.Employee;
+import app.model.MonthlyPayDTO;
+
+import java.util.*;
+
 public class AdminController {
 
     public static void adminMenu(User user) {
@@ -150,12 +162,87 @@ public class AdminController {
         // Task 7: Insert into multiple related tables (employees, address, etc.)
     }
 
-    public static void generatePayByDivision() {
-        // Task 8: Monthly pay by division report
+    public static Map<String, Map<String, List<MonthlyPayRecord>>> generatePayByDivision(List<MonthlyPayRecord> records) {
+        Map<String, Map<String, List<MonthlyPayRecord>>> dateRecord = new HashMap<>();
+        for (MonthlyPayRecord rec : records) {
+            String year = rec.getYear();
+            String month = rec.getMonth();
+
+            if(!dateRecord.containsKey(year)) {
+                dateRecord.put(year, new HashMap<>());
+            }
+            if(!dateRecord.get(year).containsKey(month)) {
+                dateRecord.get(year).put(month, new ArrayList<>());
+            }
+
+            dateRecord.get(year).get(month).add(rec);
+        }
+
+        return dateRecord;
     }
 
-    public static void generatePayByJobTitle() {
+    public static Map<String, Map<String, List<MonthlyPayRecord>>> generatePayByJobTitle(List<MonthlyPayRecord> records) {
         // Task 9: Monthly pay by job title report
+        Map<String, Map<String, List<MonthlyPayRecord>>> dateRecord = new HashMap<>();
+        for(MonthlyPayRecord rec : records) {
+            String year = rec.getYear();
+            String month = rec.getMonth();
+
+            if(!dateRecord.containsKey(year)) {
+                dateRecord.put(year, new HashMap<>());
+            }
+            if(!dateRecord.get(year).containsKey(month)) {
+                dateRecord.get(year).put(month, new ArrayList<>());
+            }
+
+            dateRecord.get(year).get(month).add(rec);
+        }
+
+        return dateRecord;
+    }
+
+    // Generate a list of years
+    public static List<String> getYearList(Map<String, Map<String, List<MonthlyPayRecord>>> records) {
+        List<String> yearList = new ArrayList<>();
+        
+        for(String key : records.keySet()) {
+            yearList.add(key);
+        }
+
+        return yearList;
+    }
+
+    public static List<String> getMonthList(Map<String, Map<String, List<MonthlyPayRecord>>> records, String selectedYear) {
+        Map<String, List<MonthlyPayRecord>> yearData = records.get(selectedYear);
+        List<String> monthList = new ArrayList(yearData.keySet());
+        Collections.sort(monthList);
+        return monthList;
+    }
+
+    // Method for output
+    public static void printPayRecord(Map<String, Map<String, List<MonthlyPayRecord>>> records, String year, String month) {
+        StringBuilder result = new StringBuilder();
+        result.append("Report for ").append(month).append("/").append(year).append("\n\n");
+
+        if(records.containsKey(year) && records.get(year).containsKey(month)) {
+            List<MonthlyPayRecord> resultList = records.get(year).get(month);
+
+            if(resultList.isEmpty()) {
+                result.append("Record not found.");
+            } else {
+                for(MonthlyPayRecord rec : resultList) {
+                    if(rec.getDivision() == null) {
+                        result.append(String.format("%s | %.2f\n", rec.getJobTitle(), rec.getEarnings()));
+                    }
+                    if (rec.getJobTitle() == null) {
+                        result.append(String.format("%s | %.2f\n", rec.getDivision(), rec.getEarnings()));
+                    }
+                    result.append(String.format("----------------------------------------------\n\n"));
+                }
+            }
+        }
+        
+        JOptionPane.showMessageDialog(null, result.toString(), "Pay Report", JOptionPane.INFORMATION_MESSAGE);
     }
 
     public static void generateFullReport() {

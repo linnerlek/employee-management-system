@@ -1,15 +1,18 @@
 package app.view;
 
+
 import app.dao.PayrollDAO;
 import app.controller.AdminController;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
 import javax.swing.*;
+import java.awt.*;
 
 public class RaiseSalaryView {
     public static JPanel create() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        JPanel panel = new JPanel(new BorderLayout());
 
         JLabel title = new JLabel("Raise Salary", SwingConstants.CENTER);
         title.setFont(new Font("Arial", Font.BOLD, 20));
