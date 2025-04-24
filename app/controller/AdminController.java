@@ -1,13 +1,5 @@
 package app.controller;
 
-import app.dao.EmployeeDAO;
-import app.dao.PayrollDAO;
-import app.model.Employee;
-import app.model.User;
-import app.view.SearchEmployeeView;
-import java.util.List;
-import javax.swing.*;
-
 import app.view.SearchEmployeeView;
 import app.model.MonthlyPayRecord;
 
@@ -22,9 +14,9 @@ import java.util.*;
 
 public class AdminController {
 
-    public static void adminMenu(User user) {
+    public static void adminMenu() {
         // Launch the Admin dashboard GUI
-        app.view.DashboardView.display(user);
+        app.view.Dashboard.display();
     }
 
     public static void searchEmployee(String searchType) {
@@ -154,9 +146,9 @@ public class AdminController {
         // Task 5: View all employees' pay history (admin view)
     }
 
-    public static int updateSalaryRange(double min, double max, double percent) {
-    return PayrollDAO.updateSalaries(min, max, percent);
-}
+    public static void updateSalaryRange(double min, double max, double percent) {
+        // Task 6: Raise salary in specified range
+    }
 
     public static void insertNewEmployee() {
         // Task 7: Insert into multiple related tables (employees, address, etc.)
