@@ -1,6 +1,7 @@
 package app.view;
 
 import app.dao.PayrollDAO;
+import app.controller.AdminController;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -65,7 +66,7 @@ public class RaiseSalaryView {
                     double percent = Double.parseDouble(percentField.getText());
 
                     // Takes user inputted values and inputs them as parameter for the updateSalaries in PayrollDAO.java
-                    int updatedCount = PayrollDAO.updateSalaries(min, max, percent);
+                    int updatedCount = AdminController.updateSalaryRange(min, max, percent);
 
                     // Afterwards a display will pop up stating the amount of employees that were affected by the change
                     resultLabel.setText("Updated " + updatedCount + " employees' salaries.");
