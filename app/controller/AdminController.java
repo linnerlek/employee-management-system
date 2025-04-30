@@ -1,10 +1,15 @@
 package app.controller;
 
 import app.dao.EmployeeDAO;
+import app.dao.ReportDAO;
 import app.dao.PayrollDAO;
 import app.model.Employee;
 import app.model.User;
 import app.view.SearchEmployeeView;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.awt.Font;
+import java.awt.Dimension;
 import java.util.List;
 import javax.swing.*;
 
@@ -159,6 +164,38 @@ public class AdminController {
     }
 
     public static void generateFullReport() {
-        // Task 10: Full employee report
+        ResultSet rs = ReportDAO.getFullEmployeeReport();
+            if (rs == null) {
+                JOptionPane.showMessageDialog(null, "Failed to retrieve report.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            StringBuilder report = new StringBuilder();
+            report.append(String.format("%-5s %-15s %-15s %-10s %-20s %-15s%n", "ID", "First Name", "Last Name", "Salary", "Job Title", "Division"));
+            report.append("-------------------------------------------------------------------------------\n");
+
+            try {
+                while (rs.next()) {
+                    int id = rs.getInt("empid");
+                    String fname = rs.getString("fname");
+                    String lname = rs.getString("lname");
+                    double salary = rs.getDouble("salary");
+                    String jobTitle = rs.getString("job_title");
+                    String division = rs.getString("division_name");
+
+                    report.append(String.format("%-5d %-15s %-15s $%-9.2f %-20s %-15s%n", id, fname, lname, salary, jobTitle, division));
+                }
+
+                JTextArea textArea = new JTextArea(report.toString());
+                textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+                textArea.setEditable(false);
+                JScrollPane scrollPane = new JScrollPane(textArea);
+                scrollPane.setPreferredSize(new Dimension(800, 400));
+
+                JOptionPane.showMessageDialog(null, scrollPane, "Full Employee Report", JOptionPane.INFORMATION_MESSAGE);
+            } catch (SQLException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Error displaying report.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
     }
 }
