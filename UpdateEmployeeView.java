@@ -1,7 +1,6 @@
 package app.view;
 
 import app.controller.AdminController;
-import app.dao.EmployeeDAO;
 import app.model.Employee;
 import java.awt.*;
 import java.util.HashMap;
@@ -10,6 +9,7 @@ import javax.swing.*;
 
 public class UpdateEmployeeView {
     private static Map<String, JTextField> fields = new HashMap<>();
+    private static Map<String, String> originalValues = new HashMap<>();
     
     public static JDialog createDialog(Employee employee) {
         JDialog dialog = new JDialog();
@@ -28,6 +28,7 @@ public class UpdateEmployeeView {
         
         // Clear previous fields if any
         fields.clear();
+        originalValues.clear();
         
         // Personal Information Section
         addSectionLabel(formPanel, "Personal Information", gbc, 0);
@@ -48,13 +49,12 @@ public class UpdateEmployeeView {
         addFormField(formPanel, "State:", employee.getStateName(), "state", gbc, 11);
         addFormField(formPanel, "ZIP:", employee.getZip(), "zip", gbc, 12);
         
-        // Read-only information section
-        addSectionLabel(formPanel, "Job Information (Read-only)", gbc, 13);
+        // Job information section
+        addSectionLabel(formPanel, "Job Information", gbc, 13);
         
-        // These fields are read-only for demonstration purposes
         addReadOnlyField(formPanel, "Employee ID:", String.valueOf(employee.getEmpid()), gbc, 14);
-        addReadOnlyField(formPanel, "Job Title:", employee.getJobTitle(), gbc, 15);
-        addReadOnlyField(formPanel, "Division:", employee.getDivisionName(), gbc, 16);
+        addFormField(formPanel, "Job Title:", employee.getJobTitle(), "jobTitle", gbc, 15);
+        addFormField(formPanel, "Division:", employee.getDivisionName(), "divisionName", gbc, 16);
         addReadOnlyField(formPanel, "Salary:", employee.getSalary(), gbc, 17);
         addReadOnlyField(formPanel, "Hire Date:", employee.getHireDate(), gbc, 18);
         addReadOnlyField(formPanel, "SSN:", employee.getSsn(), gbc, 19);
@@ -68,8 +68,20 @@ public class UpdateEmployeeView {
         
         JButton saveButton = new JButton("Save Changes");
         saveButton.addActionListener(e -> {
+            // First validate input
+            if (!validateInput()) {
+                return; // Stop if validation fails
+            }
+            
             // Create updated employee object
             Employee updatedEmployee = createUpdatedEmployee(employee);
+            
+            if (updatedEmployee == null) {
+                JOptionPane.showMessageDialog(dialog, 
+                    "Failed to create updated employee. Please check your input.", 
+                    "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
             
             // Call controller to save changes
             boolean success = AdminController.updateEmployeeData(updatedEmployee);
@@ -79,25 +91,11 @@ public class UpdateEmployeeView {
                     "Employee information updated successfully!", 
                     "Success", JOptionPane.INFORMATION_MESSAGE);
                 
-                // Refresh the employee data that was just displayed
-                Employee refreshedEmployee = EmployeeDAO.getEmployeeById(employee.getEmpid());
-                if (refreshedEmployee != null) {
-                    // If this dialog was opened from search results, you might want to refresh those results
-                    // For now, we'll just update the current dialog
-                    dialog.dispose();
-                    
-                    // If this was called from the search results, consider refreshing those results
-                    // This could be done by passing a callback or using an observer pattern
-                } else {
-                    // Handle the case where the employee can't be reloaded
-                    JOptionPane.showMessageDialog(dialog,
-                        "Changes were saved but could not refresh display. Please search again.",
-                        "Warning", JOptionPane.WARNING_MESSAGE);
-                }
+                // If this dialog was opened from search results, you want to refresh those results
                 dialog.dispose();
             } else {
                 JOptionPane.showMessageDialog(dialog, 
-                    "Failed to update employee information.", 
+                    "Failed to update employee information. Please try again later.", 
                     "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
@@ -133,14 +131,31 @@ public class UpdateEmployeeView {
         gbc.gridy = row;
         gbc.weightx = 0.3;
         panel.add(label, gbc);
+
+        // Handle null or "Missing" values appropriately
+        String displayValue = (initialValue == null || initialValue.equals("Missing")) ? "" : initialValue;
         
-        JTextField textField = new JTextField(initialValue);
+        JTextField textField = new JTextField(displayValue);
         gbc.gridx = 1;
         gbc.weightx = 0.7;
         panel.add(textField, gbc);
         
+        // Store initial value
+        originalValues.put(fieldName, initialValue);
+        
         // Store field for later retrieval
         fields.put(fieldName, textField);
+        
+        // Add tooltips based on field type
+        if (fieldName.equals("email")) {
+            textField.setToolTipText("Format: (example@domain.com)");
+        } else if (fieldName.equals("dob")) {
+            textField.setToolTipText("Format: YYYY-MM-DD");
+        } else if (fieldName.equals("phone")) {
+            textField.setToolTipText("Format: XXX-XXX-XXXX");
+        } else if (fieldName.equals("zip")) {
+            textField.setToolTipText("Format: 12345 or 12345-6789");
+        }
     }
     
     private static void addReadOnlyField(JPanel panel, String labelText, String value, 
@@ -160,69 +175,100 @@ public class UpdateEmployeeView {
     }
     
     private static Employee createUpdatedEmployee(Employee original) {
+        // Create new Employee with updated fields from the form
         return new Employee(
             original.getEmpid(),
-            fields.get("fname").getText(),
-            fields.get("lname").getText(),
-            fields.get("email").getText(),
+            getValueOrOriginal("fname", original.getFname()),
+            getValueOrOriginal("lname", original.getLname()),
+            getValueOrOriginal("email", original.getEmail()),
             original.getSsn(),
             original.getHireDate(),
             original.getSalary(),
-            original.getJobTitle(),
-            fields.get("street").getText(),
-            fields.get("zip").getText(),
-            fields.get("gender").getText(),
-            fields.get("race").getText(),
-            fields.get("dob").getText(),
-            fields.get("phone").getText(),
-            fields.get("city").getText(),
-            fields.get("state").getText(),
-            original.getDivisionName(),
+            getValueOrOriginal("jobTitle", original.getJobTitle()),
+            getValueOrOriginal("street", original.getStreet()),
+            getValueOrOriginal("zip", original.getZip()),
+            getValueOrOriginal("gender", original.getGender()),
+            getValueOrOriginal("race", original.getRace()),
+            getValueOrOriginal("dob", original.getDob()),
+            getValueOrOriginal("phone", original.getPhone()),
+            getValueOrOriginal("city", original.getCityName()),
+            getValueOrOriginal("state", original.getStateName()),
+            getValueOrOriginal("divisionName", original.getDivisionName()),
             original.getLastPaidDate()
         );
     }
+
+    // Helper method to get the form value or the original value if form is empty
+    private static String getValueOrOriginal(String fieldName, String originalValue) {
+        String fieldValue = fields.get(fieldName).getText().trim();
+        if (fieldValue.isEmpty()) {
+            // Don't return "Missing" for date fields - use empty string instead
+            if ((fieldName.equals("dob") || fieldName.equals("phone") || fieldName.equals("gender") || 
+                fieldName.equals("race") || fieldName.equals("zip") || fieldName.equals("street") ||
+                fieldName.equals("city") || fieldName.equals("state")) && 
+                (originalValue == null || originalValue.equals("Missing"))) {
+                return "";
+            }
+            return originalValue;
+        }
+        return fieldValue;
+    }
     
-    // Simple validation method for future enhancement
+    // Validation method that handles unchanged fields
     private static boolean validateInput() {
+        // Basic validation for required fields
+        String fname = fields.get("fname").getText().trim();
+        if (fname.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "First name cannot be empty", 
+                "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        
+        String lname = fields.get("lname").getText().trim();
+        if (lname.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Last name cannot be empty", 
+                "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        
         // Email validation
-        String email = fields.get("email").getText();
-        if (!email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
-            JOptionPane.showMessageDialog(null, "Invalid email format", "Validation Error", JOptionPane.ERROR_MESSAGE);
+        String email = fields.get("email").getText().trim();
+        if (email.isEmpty() || !email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+            JOptionPane.showMessageDialog(null, "Invalid email format", 
+                "Validation Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
         
-        // DOB validation (YYYY-MM-DD)
-        String dob = fields.get("dob").getText();
-        if (!dob.matches("\\d{4}-\\d{2}-\\d{2}")) {
+        // Phone validation - only validate if changed
+        String phone = fields.get("phone").getText().trim();
+        
+        // If phone is not empty and has been changed, validate the format
+        if (!phone.isEmpty() && !phone.matches("\\d{3}-\\d{3}-\\d{4}")) {
+            JOptionPane.showMessageDialog(null, "Phone must be in format XXX-XXX-XXXX", 
+                "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        
+        // DOB validation - only validate if changed
+        String dob = fields.get("dob").getText().trim();
+      
+        // If DOB is not empty and has been changed, validate the format
+        if (!dob.isEmpty() && !dob.matches("\\d{4}-\\d{2}-\\d{2}")) {
             JOptionPane.showMessageDialog(null, "Date of Birth must be in format YYYY-MM-DD", 
-                                         "Validation Error", JOptionPane.ERROR_MESSAGE);
+                "Validation Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
         
-        // Phone validation (allow various formats for now)
-        String phone = fields.get("phone").getText();
-        if (phone.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Phone number cannot be empty", 
-                                         "Validation Error", JOptionPane.ERROR_MESSAGE);
+        // ZIP code validation - only validate if changed
+        String zip = fields.get("zip").getText().trim();
+       
+        // If ZIP is not empty and has been changed, validate the format
+        if (!zip.isEmpty() && !zip.matches("\\d{5}(-\\d{4})?")) {
+            JOptionPane.showMessageDialog(null, "ZIP code must be in format 12345 or 12345-6789", 
+                "Validation Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
-        
+    
         return true;
     }
-
-    public static void addValidatedFormField(JPanel panel, String labelText, String initialValue, 
-                                    String fieldName, GridBagConstraints gbc, int row) {
-        addFormField(panel, labelText, initialValue, fieldName, gbc, row);
-    
-        // Add validation for specific fields
-        JTextField field = fields.get(fieldName);
-        if (fieldName.equals("email")) {
-            field.setToolTipText("Valid email format required");
-        } else if (fieldName.equals("dob")) {
-            field.setToolTipText("Format: YYYY-MM-DD");
-        } else if (fieldName.equals("phone")) {
-            field.setToolTipText("Format: XXX-XXX-XXXX");
-        }
-    }
-
 }

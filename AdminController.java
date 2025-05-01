@@ -6,6 +6,7 @@ import app.view.UpdateEmployeeView;
 
 import javax.swing.*;
 import app.dao.EmployeeDAO;
+import app.dao.EmployeeDAO.UpdateResult;
 import app.model.Employee;
 import app.model.User;
 
@@ -171,31 +172,16 @@ public class AdminController {
             return false;
         }
         
-        // Debug: Print values before update
-        System.out.println("Before update - Values: " + 
-                            currentEmployee.getFname() + " " + 
-                            currentEmployee.getLname() + ", " +
-                            currentEmployee.getEmail() + ", " +
-                            currentEmployee.getPhone());
-                            
         // Call DAO to update employee data
-        boolean updateSuccess = EmployeeDAO.updateEmployee(updatedEmployee);
+        UpdateResult updateResult = EmployeeDAO.updateEmployee(updatedEmployee);
         
-        if (updateSuccess) {
-            // Clear cache - important!
-            System.out.println("Update reported success");
-            
-            // Re-fetch employee with a fresh database query
-            Employee verifiedEmployee = EmployeeDAO.getEmployeeById(updatedEmployee.getEmpid());
-            System.out.println("Verification - Updated values: " + 
-                               verifiedEmployee.getFname() + " " + 
-                               verifiedEmployee.getLname() + ", " +
-                               verifiedEmployee.getEmail() + ", " +
-                               verifiedEmployee.getPhone());
-                               
+        if (updateResult.isSuccess()) {
             return true;
         } else {
-            System.out.println("Update failed in database layer");
+            // Show specific error message from database operation
+            JOptionPane.showMessageDialog(null, 
+                "Update failed: " + updateResult.getMessage(), 
+                "Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
     }
