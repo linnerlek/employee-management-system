@@ -1,17 +1,29 @@
 package app.controller;
 
+import app.view.SearchEmployeeView;
+import app.view.UpdateEmployeeView;
+
+
+import javax.swing.*;
 import app.dao.EmployeeDAO;
-import app.dao.ReportDAO;
+import app.dao.EmployeeDAO.UpdateResult;
 import app.dao.PayrollDAO;
 import app.model.Employee;
+import app.model.MonthlyPayRecord;
 import app.model.User;
-import app.view.SearchEmployeeView;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import app.dao.ReportDAO;
+
 import java.awt.Font;
 import java.awt.Dimension;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import javax.swing.*;
+import java.util.Map;
 
 public class AdminController {
 
@@ -133,14 +145,55 @@ public class AdminController {
                 emp.getGender(), emp.getRace(), emp.getDob(), emp.getPhone(), emp.getLastPaidDate());
 
         JOptionPane.showMessageDialog(null, result, "Employee Found", JOptionPane.INFORMATION_MESSAGE);
+
+        // Create panel for displaying results with an update button
+        JPanel panel = new JPanel(new BorderLayout());
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton updateButton = new JButton("Update Employee");
+        // Add action listener to open update form
+        updateButton.addActionListener(e -> {
+            // Create and show update dialog
+            JDialog updateDialog = UpdateEmployeeView.createDialog(emp);
+            updateDialog.setVisible(true);
+        });
+
+        buttonPanel.add(updateButton);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+        // Show the dialog with custom panel
+        JOptionPane.showOptionDialog(null, panel, "Employee Found", 
+                                    JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
+                                    null, new Object[]{}, null);
+
     }
 
     private static void showError(String message) {
         JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
 
-    public static void updateEmployeeData() {
+    public static boolean updateEmployeeData(Employee updatedEmployee) {
         // Task 4: Admin updates employee info
+    
+        // Validate that the employee exists
+        Employee currentEmployee = EmployeeDAO.getEmployeeById(updatedEmployee.getEmpid());
+        if (currentEmployee == null) {
+            JOptionPane.showMessageDialog(null, 
+                "Employee not found. Cannot update.", 
+                "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        
+        // Call DAO to update employee data
+        UpdateResult updateResult = EmployeeDAO.updateEmployee(updatedEmployee);
+        
+        if (updateResult.isSuccess()) {
+            return true;
+        } else {
+            // Show specific error message from database operation
+            JOptionPane.showMessageDialog(null, 
+                "Update failed: " + updateResult.getMessage(), 
+                "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
     }
 
     public static void viewAllPayStatements() {
@@ -148,21 +201,96 @@ public class AdminController {
     }
 
     public static int updateSalaryRange(double min, double max, double percent) {
-    return PayrollDAO.updateSalaries(min, max, percent);
-}
+        // Task 6: Raise salary in specified range
+        return PayrollDAO.updateSalaries(min, max, percent);
+    }
 
     public static void insertNewEmployee() {
         // Task 7: Insert into multiple related tables (employees, address, etc.)
     }
 
-    public static void generatePayByDivision() {
-        // Task 8: Monthly pay by division report
+    public static Map<String, Map<String, List<MonthlyPayRecord>>> generatePayByDivision(List<MonthlyPayRecord> records) {
+        Map<String, Map<String, List<MonthlyPayRecord>>> dateRecord = new HashMap<>();
+        for (MonthlyPayRecord rec : records) {
+            String year = rec.getYear();
+            String month = rec.getMonth();
+
+            if(!dateRecord.containsKey(year)) {
+                dateRecord.put(year, new HashMap<>());
+            }
+            if(!dateRecord.get(year).containsKey(month)) {
+                dateRecord.get(year).put(month, new ArrayList<>());
+            }
+
+            dateRecord.get(year).get(month).add(rec);
+        }
+
+        return dateRecord;
     }
 
-    public static void generatePayByJobTitle() {
+    public static Map<String, Map<String, List<MonthlyPayRecord>>> generatePayByJobTitle(List<MonthlyPayRecord> records) {
         // Task 9: Monthly pay by job title report
+        Map<String, Map<String, List<MonthlyPayRecord>>> dateRecord = new HashMap<>();
+        for(MonthlyPayRecord rec : records) {
+            String year = rec.getYear();
+            String month = rec.getMonth();
+
+            if(!dateRecord.containsKey(year)) {
+                dateRecord.put(year, new HashMap<>());
+            }
+            if(!dateRecord.get(year).containsKey(month)) {
+                dateRecord.get(year).put(month, new ArrayList<>());
+            }
+
+            dateRecord.get(year).get(month).add(rec);
+        }
+
+        return dateRecord;
     }
 
+    // Generate a list of years
+    public static List<String> getYearList(Map<String, Map<String, List<MonthlyPayRecord>>> records) {
+        List<String> yearList = new ArrayList<>();
+        
+        for(String key : records.keySet()) {
+            yearList.add(key);
+        }
+
+        return yearList;
+    }
+
+    public static List<String> getMonthList(Map<String, Map<String, List<MonthlyPayRecord>>> records, String selectedYear) {
+        Map<String, List<MonthlyPayRecord>> yearData = records.get(selectedYear);
+        List<String> monthList = new ArrayList(yearData.keySet());
+        Collections.sort(monthList);
+        return monthList;
+    }
+
+    // Method for output
+    public static void printPayRecord(Map<String, Map<String, List<MonthlyPayRecord>>> records, String year, String month) {
+        StringBuilder result = new StringBuilder();
+        result.append("Report for ").append(month).append("/").append(year).append("\n\n");
+
+        if(records.containsKey(year) && records.get(year).containsKey(month)) {
+            List<MonthlyPayRecord> resultList = records.get(year).get(month);
+
+            if(resultList.isEmpty()) {
+                result.append("Record not found.");
+            } else {
+                for(MonthlyPayRecord rec : resultList) {
+                    if(rec.getDivision() == null) {
+                        result.append(String.format("%s | %.2f\n", rec.getJobTitle(), rec.getEarnings()));
+                    }
+                    if (rec.getJobTitle() == null) {
+                        result.append(String.format("%s | %.2f\n", rec.getDivision(), rec.getEarnings()));
+                    }
+                    result.append(String.format("----------------------------------------------\n\n"));
+                }
+            }
+        }
+        
+        JOptionPane.showMessageDialog(null, result.toString(), "Pay Report", JOptionPane.INFORMATION_MESSAGE);
+    }
     public static void generateFullReport() {
         ResultSet rs = ReportDAO.getFullEmployeeReport();
             if (rs == null) {
