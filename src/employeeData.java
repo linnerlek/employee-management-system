@@ -10,10 +10,10 @@ public class employeeData {
     private BigDecimal salary;
     private String ssn;
     private String address;
-    private String jobTitle;   // Store the job title as String
-    private int jobTitleId;    // Store the job title ID as int
-    private String division;   // Store the division as String
-    private int divisionId;    // Store the division ID as int
+    private String jobTitle;  
+    private int jobTitleId;    
+    private String division;   
+    private int divisionId;    
 
     // Getters and Setters
     public int getEmpid() {
