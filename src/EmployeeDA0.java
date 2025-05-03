@@ -4,7 +4,7 @@ import java.sql.PreparedStatement;
 
 public class EmployeeDA0 {
     public boolean insertEmployee(employeeData data) throws Exception {
-        // Adjust these values to match your database setup
+        // Adjust 
         String url = "jdbc:mysql://localhost:3306/employeeData";
         String user = "root";
         String password = "password";
