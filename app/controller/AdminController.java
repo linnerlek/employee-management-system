@@ -172,36 +172,16 @@ public class AdminController {
             return false;
         }
         
-        // Debug: Print values before update
-        System.out.println("Before update - Values: " + 
-                            currentEmployee.getFname() + " " + 
-                            currentEmployee.getLname() + ", " +
-                            currentEmployee.getEmail() + ", " +
-                            currentEmployee.getPhone());
-                            
         // Call DAO to update employee data
         UpdateResult updateResult = EmployeeDAO.updateEmployee(updatedEmployee);
         
         if (updateResult.isSuccess()) {
-            // Clear cache - important!
-            System.out.println("Update reported success: " + updateResult.getMessage());
-            
-            // Re-fetch employee with a fresh database query
-            Employee verifiedEmployee = EmployeeDAO.getEmployeeById(updatedEmployee.getEmpid());
-            System.out.println("Verification - Updated values: " + 
-                               verifiedEmployee.getFname() + " " + 
-                               verifiedEmployee.getLname() + ", " +
-                               verifiedEmployee.getEmail() + ", " +
-                               verifiedEmployee.getPhone());
-                               
             return true;
         } else {
             // Show specific error message from database operation
             JOptionPane.showMessageDialog(null, 
                 "Update failed: " + updateResult.getMessage(), 
                 "Error", JOptionPane.ERROR_MESSAGE);
-                
-            System.out.println("Update failed: " + updateResult.getMessage());
             return false;
         }
     }
