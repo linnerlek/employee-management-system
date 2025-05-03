@@ -96,7 +96,31 @@ public class ReportDAO {
         return records;
     }
 
-    public static void getFullEmployeeReport() {
-        // Task 10
+    public static ResultSet getFullEmployeeReport() {
+    String sql = """
+            SELECT 
+                e.empid, 
+                e.fname, 
+                e.lname, 
+                e.salary, 
+                jt.job_title, 
+                d.Name AS division_name
+            FROM employeedata.employees e
+            LEFT JOIN employeedata.employee_job_titles ejt ON e.empid = ejt.empid
+            LEFT JOIN employeedata.job_titles jt ON ejt.job_title_id = jt.job_title_id
+            LEFT JOIN employeedata.employee_division ed ON e.empid = ed.empid
+            LEFT JOIN employeedata.division d ON ed.div_ID = d.ID
+            ORDER BY e.empid;
+        """;
+
+    try {
+        Connection conn = DBConnection.getConnection();
+        PreparedStatement stmt = conn.prepareStatement(sql);
+        return stmt.executeQuery();  // ✅ Now valid with ResultSet return type
+    } catch (SQLException e) {
+        e.printStackTrace();
+        return null;
     }
+}
+
 }

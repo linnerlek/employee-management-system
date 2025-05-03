@@ -40,11 +40,14 @@ public class ReportsView {
         yearPanel.setName("yearPanel");
         JPanel monthPanel = new JPanel(); //Placeholder
         monthPanel.setName("monthPanel");
+        JPanel fullReportPanel = createFullReportPanel();
+        fullReportPanel.setName("fullReportPanel");
         
         //Add panels to card panel
         cardPanel.add(buttonsPanel, "buttons");
         cardPanel.add(yearPanel, "yearPanel");
         cardPanel.add(monthPanel, "monthPanel");
+        cardPanel.add(fullReportPanel, "fullReportPanel");
 
         // Add button panel to main panel
         panel.add(cardPanel, BorderLayout.CENTER);
@@ -100,6 +103,15 @@ public class ReportsView {
             CardLayout cl = (CardLayout) cardPanel.getLayout();
             cl.show(cardPanel, "yearPanel");
             
+        }));
+
+        buttonPanel.add(Box.createVerticalStrut(10));
+        buttonPanel.add(createViewButton("Full Employee Report", e -> {
+            JPanel fullReportPanel = createFullReportPanel();
+            cardPanel.add(fullReportPanel, "fullReportPanel");
+
+            CardLayout cl = (CardLayout) cardPanel.getLayout();
+            cl.show(cardPanel, "fullReportPanel");
         }));
 
         return buttonPanel;
@@ -226,4 +238,32 @@ public class ReportsView {
         }
         return null;
     }
+
+        public static JPanel createFullReportPanel() {
+            JPanel panel = new JPanel(new BorderLayout());
+
+            JPanel buttonPanel = new JPanel();
+            buttonPanel.setLayout(new GridLayout(0, 1, 10, 10));
+
+            // Add Full Employee Report button
+            JButton fullReportButton = new JButton("Generate Full Report");
+            fullReportButton.addActionListener(e -> AdminController.generateFullReport());
+            buttonPanel.add(fullReportButton);
+
+            // Add "Back" button to return to the 3 types of reports
+            JButton backButton = new JButton("Back");
+            backButton.addActionListener(e -> {
+                CardLayout cl = (CardLayout) panel.getParent().getLayout();
+                cl.show(panel.getParent(), "buttons"); // Go back to the main buttons panel
+            });
+            buttonPanel.add(backButton);
+
+            // Add spacing and padding
+            JPanel centerWrapper = new JPanel(new GridBagLayout());
+            centerWrapper.add(buttonPanel);
+            panel.add(centerWrapper, BorderLayout.CENTER);
+
+        return panel;
+    }
+
 }
