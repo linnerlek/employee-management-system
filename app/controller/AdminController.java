@@ -17,6 +17,7 @@ import java.awt.Font;
 import java.awt.Dimension;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.util.ArrayList;
@@ -27,9 +28,9 @@ import java.util.Map;
 
 public class AdminController {
 
-    public static void adminMenu(User user) {
+    public static void adminMenu() {
         // Launch the Admin dashboard GUI
-        app.view.DashboardView.display(user);
+        app.view.Dashboard.display();
     }
 
     public static void searchEmployee(String searchType) {
