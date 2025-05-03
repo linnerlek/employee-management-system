@@ -1,18 +1,25 @@
 package app.controller;
 
+import app.view.SearchEmployeeView;
+import app.view.UpdateEmployeeView;
+
+
+import javax.swing.*;
 import app.dao.EmployeeDAO;
-import app.dao.PayrollDAO;
+import app.dao.EmployeeDAO.UpdateResult;
 import app.model.Employee;
 import app.model.User;
-import app.view.SearchEmployeeView;
+
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+
 import java.util.List;
-import javax.swing.*;
 
 public class AdminController {
 
-    public static void adminMenu(User user) {
+    public static void adminMenu() {
         // Launch the Admin dashboard GUI
-        app.view.DashboardView.display(user);
+        app.view.Dashboard.display();
     }
 
     public static void searchEmployee(String searchType) {
@@ -128,23 +135,84 @@ public class AdminController {
                 emp.getGender(), emp.getRace(), emp.getDob(), emp.getPhone(), emp.getLastPaidDate());
 
         JOptionPane.showMessageDialog(null, result, "Employee Found", JOptionPane.INFORMATION_MESSAGE);
+
+        // Create panel for displaying results with an update button
+        JPanel panel = new JPanel(new BorderLayout());
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton updateButton = new JButton("Update Employee");
+        // Add action listener to open update form
+        updateButton.addActionListener(e -> {
+            // Create and show update dialog
+            JDialog updateDialog = UpdateEmployeeView.createDialog(emp);
+            updateDialog.setVisible(true);
+        });
+
+        buttonPanel.add(updateButton);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+        // Show the dialog with custom panel
+        JOptionPane.showOptionDialog(null, panel, "Employee Found", 
+                                    JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
+                                    null, new Object[]{}, null);
+
     }
 
     private static void showError(String message) {
         JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
 
-    public static void updateEmployeeData() {
+    public static boolean updateEmployeeData(Employee updatedEmployee) {
         // Task 4: Admin updates employee info
+    
+        // Validate that the employee exists
+        Employee currentEmployee = EmployeeDAO.getEmployeeById(updatedEmployee.getEmpid());
+        if (currentEmployee == null) {
+            JOptionPane.showMessageDialog(null, 
+                "Employee not found. Cannot update.", 
+                "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        
+        // Debug: Print values before update
+        System.out.println("Before update - Values: " + 
+                            currentEmployee.getFname() + " " + 
+                            currentEmployee.getLname() + ", " +
+                            currentEmployee.getEmail() + ", " +
+                            currentEmployee.getPhone());
+                            
+        // Call DAO to update employee data
+        UpdateResult updateResult = EmployeeDAO.updateEmployee(updatedEmployee);
+        
+        if (updateResult.isSuccess()) {
+            // Clear cache - important!
+            System.out.println("Update reported success: " + updateResult.getMessage());
+            
+            // Re-fetch employee with a fresh database query
+            Employee verifiedEmployee = EmployeeDAO.getEmployeeById(updatedEmployee.getEmpid());
+            System.out.println("Verification - Updated values: " + 
+                               verifiedEmployee.getFname() + " " + 
+                               verifiedEmployee.getLname() + ", " +
+                               verifiedEmployee.getEmail() + ", " +
+                               verifiedEmployee.getPhone());
+                               
+            return true;
+        } else {
+            // Show specific error message from database operation
+            JOptionPane.showMessageDialog(null, 
+                "Update failed: " + updateResult.getMessage(), 
+                "Error", JOptionPane.ERROR_MESSAGE);
+                
+            System.out.println("Update failed: " + updateResult.getMessage());
+            return false;
+        }
     }
 
     public static void viewAllPayStatements() {
         // Task 5: View all employees' pay history (admin view)
     }
 
-    public static int updateSalaryRange(double min, double max, double percent) {
-    return PayrollDAO.updateSalaries(min, max, percent);
-}
+    public static void updateSalaryRange(double min, double max, double percent) {
+        // Task 6: Raise salary in specified range
+    }
 
     public static void insertNewEmployee() {
         // Task 7: Insert into multiple related tables (employees, address, etc.)
