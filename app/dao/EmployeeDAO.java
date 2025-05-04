@@ -686,4 +686,28 @@ public class EmployeeDAO {
             this.message = message;
         }
     }
+    // insert new employee
+    public static String insertNewEmployee(Employee e) {
+        String sql = "INSERT INTO employee (emp_id, fname, lname, email, hire_date, salary, ssn, street, job_title, division_name) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection conn = DB.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, e.getEmpid());
+            stmt.setString(2, e.getFname());
+            stmt.setString(3, e.getLname());
+            stmt.setString(4, e.getEmail());
+            stmt.setDate(5, java.sql.Date.valueOf(e.getHireDate())); 
+            stmt.setString(6, e.getSalary()); 
+            stmt.setString(7, e.getSsn());
+            stmt.setString(8, e.getStreet()); 
+            stmt.setString(9, e.getJobTitle()); 
+            stmt.setString(10, e.getDivisionName());
+
+            int rows = stmt.executeUpdate();
+            return rows > 0 ? "Employee added successfully!" : "Insert failed. No rows affected.";
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return "Database error: " + ex.getMessage();
+        }
+    }
 }
