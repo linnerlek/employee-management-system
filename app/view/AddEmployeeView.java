@@ -2,12 +2,11 @@ package app.view;
 
 import app.controller.AdminController;
 import app.model.Employee;
-
-import javax.swing.*;
 import java.awt.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import javax.swing.*;
 
 public class AddEmployeeView {
     public static JPanel create() {

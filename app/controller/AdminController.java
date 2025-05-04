@@ -15,6 +15,9 @@ import app.dao.ReportDAO;
 
 import java.awt.Font;
 import java.awt.Dimension;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -206,8 +209,42 @@ public class AdminController {
         return PayrollDAO.updateSalaries(min, max, percent);
     }
 
-    public static void insertNewEmployee() {
-        // Task 7: Insert into multiple related tables (employees, address, etc.)
+    public static String insertNewEmployee(Employee data) {
+        try (Connection conn = DriverManager.getConnection("jdbc:your_url", "user", "password")) {
+            conn.setAutoCommit(false);
+    
+            String insertEmp = "INSERT INTO employees (empid, fname, lname, email, hireDate, salary, ssn) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement ps = conn.prepareStatement(insertEmp)) {
+                ps.setInt(1, data.getEmpid());
+                ps.setString(2, data.getFname());
+                ps.setString(3, data.getLname());
+                ps.setString(4, data.getEmail());
+                ps.setDate(5, java.sql.Date.valueOf(data.getHireDate()));
+                ps.setString(6, data.getSalary());
+                ps.setString(7, data.getSsn());
+                ps.executeUpdate();
+            }
+    
+            String insertJob = "INSERT INTO employee_job_titles (empid, job_title_id) VALUES (?, ?)";
+            try (PreparedStatement ps = conn.prepareStatement(insertJob)) {
+                ps.setInt(1, data.getEmpid());
+                ps.setString(2, data.getJobTitle());
+                ps.executeUpdate();
+            }
+    
+            String insertDiv = "INSERT INTO employee_division (empid, div_ID) VALUES (?, ?)";
+            try (PreparedStatement ps = conn.prepareStatement(insertDiv)) {
+                ps.setInt(1, data.getEmpid());
+                ps.setString(2, data.getDivisionName());
+                ps.executeUpdate();
+            }
+    
+            conn.commit();
+            return "Employee inserted successfully.";
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return "Insertion failed: " + ex.getMessage();
+        }
     }
 
     public static Map<String, Map<String, List<MonthlyPayRecord>>> generatePayByDivision(List<MonthlyPayRecord> records) {
