@@ -686,28 +686,102 @@ public class EmployeeDAO {
             this.message = message;
         }
     }
+    
     // insert new employee
-    public static String insertNewEmployee(Employee e) {
-        String sql = "INSERT INTO employee (emp_id, fname, lname, email, hire_date, salary, ssn, street, job_title, division_name) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    public static UpdateResult insertEmployee(Employee data) {
+        //String insertStateSQL = "INSERT INTO state (state_id, state_name)VALUES (?, ?)";
+        //String insertCitySQL = "INSERT INTO city (city_id, city_name)VALUES (?, ?)";
+        String insertDivSQL = "INSERT INTO division (empid, name, city, addressLine1, addressLine2, state, country, postalcode) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String insertJobSQL = "INSERT INTO employee_job_titles (empid, job_title_id) VALUES (?, ?)";
+        String insertEmpSQL = "INSERT INTO employees (empid, Fname, Lname, email, HireDate, Salary, SSN) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String insertAddressSQL = "INSERT INTO address (empid, street, zip, gender, phone, race, dob, city_id, state_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String insertEmp_DivSQL = "INSERT INTO employee_division (empid, div_ID)VALUES (?, ?)";
+    
+        try (Connection conn = DBConnection.getConnection()) {
+            conn.setAutoCommit(false); 
+    
+            try (
+                PreparedStatement empStmt = conn.prepareStatement(insertEmpSQL);
+                PreparedStatement addrStmt = conn.prepareStatement(insertAddressSQL);
+                //PreparedStatement cityStmt = conn.prepareStatement(insertCitySQL);
+                //PreparedStatement stateStmt = conn.prepareStatement(insertCitySQL);
+                PreparedStatement jobStmt = conn.prepareStatement(insertJobSQL);
+                PreparedStatement divStmt = conn.prepareStatement(insertDivSQL);
+                PreparedStatement emp_divStmt = conn.prepareStatement(insertEmp_DivSQL)
+            ) {
 
-        try (Connection conn = DB.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, e.getEmpid());
-            stmt.setString(2, e.getFname());
-            stmt.setString(3, e.getLname());
-            stmt.setString(4, e.getEmail());
-            stmt.setDate(5, java.sql.Date.valueOf(e.getHireDate())); 
-            stmt.setString(6, e.getSalary()); 
-            stmt.setString(7, e.getSsn());
-            stmt.setString(8, e.getStreet()); 
-            stmt.setString(9, e.getJobTitle()); 
-            stmt.setString(10, e.getDivisionName());
+                int jobTitleId = AddEmployeeView.mapJobTitleToId(data.getJobTitle());
+                int divisionId = AddEmployeeView.mapDivisionToId(data.getDivisionName());
+                int cityId = AddEmployeeView.mapCityToId(data.getCityName());
+                int stateId = AddEmployeeView.mapStateToId(data.getStateName());
 
-            int rows = stmt.executeUpdate();
-            return rows > 0 ? "Employee added successfully!" : "Insert failed. No rows affected.";
+                // Insert into employees
+                empStmt.setInt(1, data.getEmpid());
+                empStmt.setString(2, data.getFname());
+                empStmt.setString(3, data.getLname());
+                empStmt.setString(4, data.getEmail());
+                empStmt.setDate(5, java.sql.Date.valueOf(data.getHireDate()));
+                empStmt.setBigDecimal(6, new BigDecimal(data.getSalary()));
+                empStmt.setString(7, data.getSsn());
+                empStmt.executeUpdate();
+    
+                // Insert into address
+                addrStmt.setInt(1, data.getEmpid());
+                addrStmt.setString(2, data.getStreet());
+                addrStmt.setString(3, data.getZip());
+                addrStmt.setString(4, data.getGender());
+                addrStmt.setString(5, data.getPhone());
+                addrStmt.setString(6, data.getRace());
+                addrStmt.setDate(7, java.sql.Date.valueOf(data.getDob()));
+                addrStmt.setString(8, String.valueOf(cityId));
+                addrStmt.setString(9, String.valueOf(stateId));
+                
+                addrStmt.executeUpdate();
+
+                /*  Insert city
+                //cityStmt.setInt(1, data.getCity_Id());
+                cityStmt.setString(2, data.getCityName());
+                cityStmt.executeUpdate();
+
+                 Insert state
+                stateStmt.setInt(1, data.getState_Id());
+                stateStmt.setString(2, data.getStateName());
+                stateStmt.executeUpdate();
+                */
+    
+                // Insert job title
+                jobStmt.setInt(1, data.getEmpid());
+                jobStmt.setString(2, String.valueOf(jobTitleId));
+                jobStmt.executeUpdate();
+
+                // Insert division
+                divStmt.setInt(1, data.getEmpid());
+                divStmt.setString(2, data.getDivisionName());
+                divStmt.setString(3, data.getCityName());
+                divStmt.setString(4, data.getStreet());
+                divStmt.setString(5, data.getAddressLine2());
+                divStmt.setString(6, data.getStateName());
+                divStmt.setString(7, data.getCountry());
+                divStmt.setString(8, data.getZip());
+                divStmt.setString(2, String.valueOf(divisionId));
+                divStmt.executeUpdate();
+    
+                // Insert employee_division
+                emp_divStmt.setInt(1, data.getEmpid());
+                emp_divStmt.setString(2, data.getDivisionName());
+                emp_divStmt.executeUpdate();
+    
+                conn.commit();
+                return new UpdateResult(true, "Employee inserted successfully.");
+            } catch (Exception innerEx) {
+                conn.rollback();
+                System.err.println("SQL Exception occurred: " + innerEx.getMessage());
+                return new UpdateResult(false, "Failed to insert employee: " + innerEx.getMessage());
+            }
         } catch (SQLException ex) {
-            ex.printStackTrace();
-            return "Database error: " + ex.getMessage();
+            System.err.println("SQL Exception occurred: " + ex.getMessage());
+            return new UpdateResult(false, "DB Connection failed: " + ex.getMessage());
         }
-    }
+    }    
+
 }
