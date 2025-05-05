@@ -208,43 +208,10 @@ public class AdminController {
 
  // Task 7: Insert New Employee
     public static String insertNewEmployee(Employee data) {
-        try (Connection conn = DriverManager.getConnection("jdbc:"url", "user", "password")) {
-            conn.setAutoCommit(false);
-    
-            String insertEmp = "INSERT INTO employees (empid, fname, lname, email, hireDate, salary, ssn) VALUES (?, ?, ?, ?, ?, ?, ?)";
-            try (PreparedStatement ps = conn.prepareStatement(insertEmp)) {
-                ps.setInt(1, data.getEmpid());
-                ps.setString(2, data.getFname());
-                ps.setString(3, data.getLname());
-                ps.setString(4, data.getEmail());
-                ps.setDate(5, java.sql.Date.valueOf(data.getHireDate()));
-                ps.setBigDecimal(6, data.getSalary());
-                ps.setString(7, data.getSsn());
-                ps.executeUpdate();
-            }
-    
-            String insertJob = "INSERT INTO employee_job_titles (empid, job_title_id) VALUES (?, ?)";
-            try (PreparedStatement ps = conn.prepareStatement(insertJob)) {
-                ps.setInt(1, data.getEmpid());
-                ps.setInt(2, data.getJobTitle());
-                ps.executeUpdate();
-            }
-    
-            String insertDiv = "INSERT INTO employee_division (empid, div_ID) VALUES (?, ?)";
-            try (PreparedStatement ps = conn.prepareStatement(insertDiv)) {
-                ps.setInt(1, data.getEmpid());
-                ps.setInt(2, data.getDivisionName());
-                ps.executeUpdate();
-            }
-    
-            conn.commit();
-            return "Employee inserted successfully.";
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return "Insertion failed: " + ex.getMessage();
-        }
+        EmployeeDAO.UpdateResult result = EmployeeDAO.insertEmployee(data);
+        return result.getMessage();
     }
-
+                
     public static Map<String, Map<String, List<MonthlyPayRecord>>> generatePayByDivision(List<MonthlyPayRecord> records) {
         Map<String, Map<String, List<MonthlyPayRecord>>> dateRecord = new HashMap<>();
         for (MonthlyPayRecord rec : records) {
